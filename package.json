@@ -1,0 +1,25 @@
+{
+  "name": "bootleg-link",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": "index.js",
+  "scripts": {
+    "build": "pkg ."
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fs-extra": "^10.0.0",
+    "mkdirp": "^1.0.4",
+    "pkg": "^5.5.2",
+    "urlencode": "^1.1.0",
+    "youtube-dl-exec": "^2.0.2"
+  },
+  "pkg": {
+    "assets": [
+      "assets/**/*"
+    ],
+    "outputPath": "dist"
+  }
+}
