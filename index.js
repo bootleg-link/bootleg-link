@@ -41,10 +41,11 @@ taskUrlList.split('\n').forEach(url => {
   const youtubedl = createYoutubeDl(fullYoutubeDlPath)
   const downloaderQuene = [];
   let downloaderQueneIndex = 0;
+  const spawnOpt = { cwd: outputPath };
   const dl = () => {
     try {
-      spawn('rm', ['-rf', fileLock]);
-      const child = spawn(fullYoutubeDlPath, [url, '--flat-playlist', '--proxy', 'socks5://127.0.0.1:1080', '--get-id']);
+      spawn('rm', ['-rf', fileLock], spawnOpt);
+      const child = spawn(fullYoutubeDlPath, [url, '--flat-playlist', '--proxy', 'socks5://127.0.0.1:1080', '--get-id'], spawnOpt);
       child.stdout.on('data', (chunk) => {
         downloaderQuene.push(chunk);
       });
@@ -61,7 +62,7 @@ taskUrlList.split('\n').forEach(url => {
   }, 1000);
 
   const fileLock = `downloader.lock`;
-  spawn('rm', ['-rf', fileLock]);
+  spawn('rm', ['-rf', fileLock], spawnOpt);
   const blockRegExp = /Full Set|Festival 20|Full HD/;
 
   setInterval(() => {
@@ -86,7 +87,7 @@ taskUrlList.split('\n').forEach(url => {
           if (fileList.indexOf(`${title}.aiff`) > -1 && fileList.indexOf(`${title}.webp`) <= -1) {
             success = true;
             console.log(`Already exist, skip ${title}.m4a`);
-            spawn('rm', ['-rf', fileLock]);
+            spawn('rm', ['-rf', fileLock], spawnOpt);
             return;
           }
           console.log(`Start downloading ${title}.m4a`);
@@ -113,6 +114,4 @@ taskUrlList.split('\n').forEach(url => {
       downloaderQueneIndex++;
     }
   }, 200);
-
-
 });
