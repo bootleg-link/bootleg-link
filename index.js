@@ -69,7 +69,7 @@ taskUrlList.split('\n').forEach(url => {
     const fileList = fs.readdirSync(outputPath);
     const chunk = downloaderQuene[downloaderQueneIndex];
     if (chunk && fileList.indexOf(fileLock) <= -1) {
-      fs.closeSync(fs.openSync(fileLock, 'w'));
+      fs.closeSync(fs.openSync(path.join(outputPath ,fileLock), 'w'));
       const urlItem = `https://www.youtube.com/watch?v=${chunk.toString()}`;
       let success = false;
       try {
@@ -104,9 +104,7 @@ taskUrlList.split('\n').forEach(url => {
             "restrictFilenames": true,
           }), urlencode(title)];
           console.log('Argv:', argvArr);
-          setTimeout(() => fork(path.join(__dirname, "downloader.js"), argvArr, {
-            cwd: outputPath
-          }), 0);
+          setTimeout(() => fork(path.join(__dirname, "downloader.js"), argvArr, spawnOpt), 0);
         }).catch(e => console.log(e) || dl());
       } catch (e) {
         console.log(`Already expcetion, skip ${title}.m4a`);
