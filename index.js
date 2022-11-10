@@ -14,7 +14,7 @@ const DOWNLOADER_PARALLEL_COUNT = 20;
 
 const urlencode = require('urlencode');
 const fullYoutubeDlPath = path.join(__dirname, '../bootleg-link/assets/youtube-dl');
-// const fullAria2cPath = path.join(__dirname, '../bootleg-link/assets/aria2c');
+const fullAria2cPath = path.join(__dirname, '../bootleg-link/assets/aria2c');
 // const fullFFmpegPath = path.join(__dirname, '../bootleg-link/assets/ffmpeg');
 // console.log("fullAria2cPath:", fullAria2cPath);
 // console.log("fullFFmpegPath:", fullFFmpegPath);
@@ -36,6 +36,7 @@ if (!fs.existsSync(tmpYoutubeDlPath) ||
 // const tmpFFmpegPath = path.join('/tmp', './ffmpeg');
 
 const taskPath = path.join(process.cwd(), process.argv[2]);
+const allowBlocked = process.argv[3];
 const taskName = taskPath.split("/").pop();
 const outputPath = path.join(process.cwd(), 'output', taskName);
 mkdirp.sync(outputPath);
@@ -54,26 +55,39 @@ const spawnOpt = {
 
 // Playlist meta json dump
 const trackMetaList = [];
-playlistUrlList.forEach(url => {
-  // playlist meta dump json
-  const child = spawn(tmpYoutubeDlPath, [
-    url,
-    '--proxy', 'socks5://127.0.0.1:1080/',
-    '--dump-json',
-    '--flat-playlist'
-  ], spawnOpt);
-  child.stdout.on('data', data => {
-    // console.log('data', tryJSON.parse(data));
-    const meta = tryJSON.parse(data);
-    if (meta) {
-      trackMetaList.push(meta);
-      console.log('Meta list added: ', meta.title);
-    }
-    trackParallellDownloader();
-  });
-});
+const playlistMetaDownloader = async () => {
+  for (let index in playlistUrlList) {
+    // playlist meta dump json
+    const url = playlistUrlList[index];
+    await new Promise(resolver => {
+      const child = spawn(tmpYoutubeDlPath, [
+        url,
+        '--proxy', 'socks5://127.0.0.1:1080/',
+        '--dump-json',
+        '--flat-playlist',
+        '--playlist-start', '1',
+        '--playlist-end', '1000',
+      ], spawnOpt);
+      child.stdout.on('data', data => {
+        // console.log('data', tryJSON.parse(data));
+        const meta = tryJSON.parse(data);
+        if (meta) {
+          trackMetaList.push(meta);
+          console.log('Meta list added: ', meta.title);
+        }
+        // trackParallellDownloader();
+      });
+      child.on('close', (chunk) => {
+        resolver();
+      });
+    });
+    await trackParallellDownloader();
+  }
+};
+playlistMetaDownloader();
 
-
+// Track batch downloader
+const blockRegExp = /Full Set|Festival 20|Full HD|Podcast/;
 let downloading = false;
 const trackParallellDownloader = async () => {
   // lock
@@ -84,16 +98,24 @@ const trackParallellDownloader = async () => {
   console.log('trackMetaList:', trackMetaList.toString());
 
   // Parallel downloading
-  await Promise.all(Array(DOWNLOADER_PARALLEL_COUNT).fill((async () => {
+  const asyncFun = async () => {
     while(true) {
+      console.log('trackMetaList.length:', trackMetaList.length);
       // All tracks download finished
       if (trackMetaList.length === 0) {
         console.log('download finished');
         downloading = false;
-        resolve();
         break;
       }
       const { url, title } = trackMetaList.shift();
+      if (fs.existsSync(path.join(outputPath, title + '.m4a'))) {
+        console.log('Already downloaded: ' + title);
+        continue;
+      }
+      if (allowBlocked !== '--allow-blocked' && blockRegExp.test(title)) {
+        console.log('Blocked download: ' + title);
+        continue;
+      }
       console.log('Start downloading: ' + title);
       await new Promise(spResolver => {
         const child = spawn(fullYoutubeDlPath, [url,
@@ -103,17 +125,20 @@ const trackParallellDownloader = async () => {
           '-N', '10',
           '--embed-thumbnail',
           // '--restrict-filenames',
-          // '--downloader', tmpAria2cPath,
-          // '--downloader-args', '-c -j 16 -x 16 -s 16 -k 1M',
+          '--downloader', fullAria2cPath,
+          '--downloader-args', '-c -j 16 -x 16 -s 16 -k 1M',
         ], spawnOpt)
         child.stdout.on('data', (chunk) => {
           // console.log(chunk.toString());
-          spResolver();
+        });
+        child.on('close', (chunk) => {
           console.log('Finish downloading: ' + title);
+          spResolver();
         });
       });
-    }
-  })()));
+    };
+  };
+  await Array(DOWNLOADER_PARALLEL_COUNT).fill(1).map((item, index) => asyncFun());
 }
 
 // const metaDump = async () => {
