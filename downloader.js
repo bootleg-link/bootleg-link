@@ -23,21 +23,21 @@ const fullYoutubeDlPath = path.join(__dirname, '../bootleg-link/assets/youtube-d
 const youtubedl = createYoutubeDl(fullYoutubeDlPath)
 
 const handleDl = () => {
-  let proc = spawn('ffmpeg', ['-y', '-i', `${title}.m4a`, '-write_id3v2', '1', '-c:v', 'copy', `${title}.aiff`]);
+  let proc = spawn('ffmpeg', ['-y', '-i', `${title}.m4a`, '-write_id3v2', '1', '-c:v', 'copy', `${title}.m4a`]);
   const fileList = fs.readdirSync('./');
   const doHandleDl = () => {
     setTimeout(() => {
       spawn('rm', ['-rf', fileLock]);
       const fileList = fs.readdirSync('./');
-      if (fileList.indexOf(`${title}.aiff`) <= -1) {
+      if (fileList.indexOf(`${title}.m4a`) <= -1) {
         return;
       }
-      spawn('rm', ['-rf', `${title}.m4a`]);
+      // spawn('rm', ['-rf', `${title}.m4a`]);
 
       // embed cover ondemand
       if (fileList.indexOf(`${title}.m4a.jpg`) > -1) {
         spawn('kid3-cli', [
-          '-c', `select "${title}.aiff"`,
+          '-c', `select "${title}.m4a"`,
           '-c', `set picture:"${title}.m4a.jpg" ""`,
           '-c', 'save'
         ]).on('exit', () => {
