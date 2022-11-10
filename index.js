@@ -16,8 +16,6 @@ const urlencode = require('urlencode');
 const fullYoutubeDlPath = path.join(__dirname, '../bootleg-link/assets/youtube-dl');
 const fullAria2cPath = path.join(__dirname, '../bootleg-link/assets/aria2c');
 // const fullFFmpegPath = path.join(__dirname, '../bootleg-link/assets/ffmpeg');
-// console.log("fullAria2cPath:", fullAria2cPath);
-// console.log("fullFFmpegPath:", fullFFmpegPath);
 
 const tmpYoutubeDlPath = path.join('/tmp', 'youtube-dl');
 
@@ -28,9 +26,6 @@ if (!fs.existsSync(tmpYoutubeDlPath) ||
 
 // spawn('cp', [fullAria2cPath, '/tmp/aria2c']);
 // spawn('cp', [fullFFmpegPath, '/tmp/ffmpeg']);
-
-
-// process.exit();
 
 // const tmpAria2cPath = path.join('/tmp', './aria2c');
 // const tmpFFmpegPath = path.join('/tmp', './ffmpeg');
@@ -49,7 +44,6 @@ const spawnOpt = {
   cwd: outputPath,
   // stdio: 'inherit',
   // shell: true,
-  // stdio: 'inherit',
 };
 
 
@@ -89,6 +83,7 @@ playlistMetaDownloader();
 // Track batch downloader
 const blockRegExp = /Full Set|Festival 20|Full HD|Podcast/;
 let downloading = false;
+let totalDownloaded = 0;
 const trackParallellDownloader = async () => {
   // lock
   if (downloading) {
@@ -100,7 +95,6 @@ const trackParallellDownloader = async () => {
   // Parallel downloading
   const asyncFun = async () => {
     while(true) {
-      console.log('trackMetaList.length:', trackMetaList.length);
       // All tracks download finished
       if (trackMetaList.length === 0) {
         console.log('download finished');
@@ -110,6 +104,7 @@ const trackParallellDownloader = async () => {
       const { url, title } = trackMetaList.shift();
       if (fs.existsSync(path.join(outputPath, title + '.m4a'))) {
         console.log('Already downloaded: ' + title);
+        console.log('Total downloaded:', ++ totalDownloaded);
         continue;
       }
       if (allowBlocked !== '--allow-blocked' && blockRegExp.test(title)) {
@@ -125,14 +120,16 @@ const trackParallellDownloader = async () => {
           '-N', '10',
           '--embed-thumbnail',
           // '--restrict-filenames',
-          '--downloader', fullAria2cPath,
-          '--downloader-args', '-c -j 16 -x 16 -s 16 -k 1M',
+          '--convert-thumbnails', 'jpg',
+          // '--downloader', fullAria2cPath,
+          // '--downloader-args', '-c -j 16 -x 16 -s 16 -k 1M',
         ], spawnOpt)
         child.stdout.on('data', (chunk) => {
           // console.log(chunk.toString());
         });
         child.on('close', (chunk) => {
           console.log('Finish downloading: ' + title);
+          console.log('Total downloaded:', ++ totalDownloaded);
           spResolver();
         });
       });
@@ -140,29 +137,3 @@ const trackParallellDownloader = async () => {
   };
   await Array(DOWNLOADER_PARALLEL_COUNT).fill(1).map((item, index) => asyncFun());
 }
-
-// const metaDump = async () => {
-  // try {
-    // // const data = execSync(`${tmpYoutubeDlPath} ${url.replaceAll('/', '\\/')} --proxy socks5://127.0.0.1:1080/ --dump-json --flat-playlist`,
-    // const child = spawn(tmpYoutubeDlPath, [url,
-      // '--proxy', 'socks5://127.0.0.1:1080/',
-      // '--dump-json',
-      // '--flat-playlist'
-    // ], spawnOpt);
-    // child.stdout.on('data', (data) => {
-      // console.log(`child stdout:\n${data}`);
-    // });
-    // let json;
-    // console.log(data);
-    // try {
-      // json = JSON.parse(data.toString());
-      // console.log(json);
-    // } catch (e) {
-      // console.log(e);
-      // return;
-    // }
-  // } catch (e) {
-    // console.log(e)
-  // }
-// }
-// metaDump()
