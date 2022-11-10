@@ -10,7 +10,7 @@ const mkdirp = require('mkdirp')
 const tryJSON = require('tryjson');
 
 // config
-const DOWNLOADER_PARALLEL_COUNT = 10;
+const DOWNLOADER_PARALLEL_COUNT = 20;
 
 const urlencode = require('urlencode');
 const fullYoutubeDlPath = path.join(__dirname, '../bootleg-link/assets/youtube-dl');
@@ -67,6 +67,7 @@ playlistUrlList.forEach(url => {
     const meta = tryJSON.parse(data);
     if (meta) {
       trackMetaList.push(meta);
+      console.log('Meta list added: ', meta.title);
     }
     trackParallellDownloader();
   });
