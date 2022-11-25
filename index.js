@@ -63,13 +63,17 @@ const playlistMetaDownloader = async () => {
         '--playlist-end', '1000',
       ], spawnOpt);
       child.stdout.on('data', data => {
-        // console.log('data', tryJSON.parse(data));
-        const meta = tryJSON.parse(data);
-        if (meta) {
-          trackMetaList.push(meta);
-          console.log('Meta list added: ', meta.title);
-        }
-        // trackParallellDownloader();
+        data.toString().split('\n').forEach(dataItem => {
+          const meta = tryJSON.parse(dataItem);
+          if (meta) {
+            if (meta.length > 0) {
+              meta.forEach(item => trackMetaList.push(item));
+            } else {
+              trackMetaList.push(meta);
+            }
+            console.log('Meta list added: ', meta.title);
+          }
+        });
       });
       child.on('close', (chunk) => {
         resolver();
@@ -90,7 +94,7 @@ const trackParallellDownloader = async () => {
     return;
   }
   downloading = true;
-  console.log('trackMetaList:', trackMetaList.toString());
+  // console.log('trackMetaList:', trackMetaList);
 
   // Parallel downloading
   const asyncFun = async () => {
@@ -102,7 +106,7 @@ const trackParallellDownloader = async () => {
         break;
       }
       const { url, title } = trackMetaList.shift();
-      if (fs.existsSync(path.join(outputPath, title + '.m4a'))) {
+      if (fs.readdirSync(outputPath).indexOf(title + '.m4a') > -1) {
         console.log('Already downloaded: ' + title);
         console.log('Total downloaded:', ++ totalDownloaded);
         continue;
@@ -123,7 +127,7 @@ const trackParallellDownloader = async () => {
           '--convert-thumbnails', 'jpg',
           // '--downloader', fullAria2cPath,
           // '--downloader-args', '-c -j 16 -x 16 -s 16 -k 1M',
-        ], spawnOpt)
+        ], spawnOpt);
         child.stdout.on('data', (chunk) => {
           // console.log(chunk.toString());
         });
