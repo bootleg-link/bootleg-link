@@ -40,7 +40,7 @@ if (!fs.existsSync(tmpYoutubeDlPath) ||
 
 const taskPath = path.join(process.cwd(), process.argv[2]);
 const allowBlocked = process.argv[3];
-const taskName = taskPath.split("/").pop();
+const taskName = taskPath.split(isWin ? '\\' : '/').pop();
 const outputPath = path.join(process.cwd(), 'output', taskName);
 mkdirp.sync(outputPath);
 
