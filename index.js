@@ -1,27 +1,35 @@
 // const spawn = require('await-spawn')
 const {
   spawn,
-  spawnSync,
-  fork,
 } = require('child_process');
 const path = require('path');
 const fs = require('fs-extra');
 const mkdirp = require('mkdirp')
 const tryJSON = require('tryjson');
+const os = require('os');
+const urlencode = require('urlencode');
+const tmp = require('tmp');
 
 // config
 const DOWNLOADER_PARALLEL_COUNT = 20;
 
-const urlencode = require('urlencode');
-const fullYoutubeDlPath = path.join(__dirname, '../bootleg-link/assets/youtube-dl');
-const fullAria2cPath = path.join(__dirname, '../bootleg-link/assets/aria2c');
+// os
+const isWin = os.platform() === 'win32';
+const isDarwin = os.platform() === 'darwin';
+const isLinux = !isWin && !isDarwin;
+
+const fullYoutubeDlPath = path.join(__dirname, isWin ?
+  '../bootleg-link/assets/youtube-dl.exe' :
+  '../bootleg-link/assets/youtube-dl');
+// const fullAria2cPath = path.join(__dirname, '../bootleg-link/assets/aria2c');
 // const fullFFmpegPath = path.join(__dirname, '../bootleg-link/assets/ffmpeg');
 
-const tmpYoutubeDlPath = path.join('/tmp', 'youtube-dl');
+const tmpDirConfig = tmp.dirSync();
+const tmpYoutubeDlPath = path.join(tmpDirConfig.name, isWin ? 'youtube-dl.exe' : 'youtube-dl');
 
 if (!fs.existsSync(tmpYoutubeDlPath) ||
   fs.statSync(tmpYoutubeDlPath).mtime !== fs.statSync(fullYoutubeDlPath).mtime) {
-  spawnSync('cp', ['-rp', fullYoutubeDlPath, tmpYoutubeDlPath]);
+  fs.copySync(fullYoutubeDlPath, tmpYoutubeDlPath);
 }
 
 // spawn('cp', [fullAria2cPath, '/tmp/aria2c']);
