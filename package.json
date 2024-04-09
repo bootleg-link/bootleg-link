@@ -1,0 +1,36 @@
+{
+  "name": "bootleg-link",
+  "version": "1.0.8",
+  "description": "",
+  "main": "index.js",
+  "bin": "index.js",
+  "scripts": {
+    "build": "pkg . && cp -rp dist/bootleg-link-macos release/bootleg-link-macos"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "await-spawn": "^4.0.2",
+    "fs-extra": "^10.0.0",
+    "get-proxy-settings": "^0.1.13",
+    "got": "^9.6.0",
+    "macos-system-proxy-settings": "^0.1.2",
+    "mkdirp": "^1.0.4",
+    "music-tempo": "^1.0.3",
+    "pac-resolver": "^5.0.1",
+    "tmp": "^0.2.1",
+    "tryjson": "^1.1.4",
+    "urlencode": "^1.1.0"
+  },
+  "pkg": {
+    "assets": [
+      "assets/**/*",
+      "node_modules/vm2/lib/setup-sandbox.js"
+    ],
+    "targets": [
+      "node18-macos-x64",
+      "node18-win-x64"
+    ],
+    "outputPath": "dist"
+  }
+}
